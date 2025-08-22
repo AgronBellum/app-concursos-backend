@@ -1,0 +1,34 @@
+name: Atualizar Concursos
+
+on:
+  schedule:
+    - cron: "0 12 * * *"  # roda todo dia às 12h UTC (~9h da manhã no Brasil)
+  workflow_dispatch:      # permite rodar manualmente também
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositório
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: |
+          pip install requests beautifulsoup4
+
+      - name: Rodar scraper
+        run: python scraper.py   # 👈 nome do arquivo do seu código de scraping
+
+      - name: Commit e push resultados
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add concursos.json
+          git commit -m "Atualização automática de concursos"
+          git push

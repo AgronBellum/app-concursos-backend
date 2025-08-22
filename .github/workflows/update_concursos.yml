@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # 👈 necessário para dar push no repo
 
     steps:
       - name: Clonar repositório
@@ -30,5 +32,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add concursos.json
-          git commit -m "Atualização automática de concursos"
+          git commit -m "Atualização automática de concursos" || echo "Nada a atualizar"
           git push

@@ -1,9 +1,7 @@
 import requests
+from bs4 import BeautifulSoup
 import json
 
-# ================================
-# Classificação por área (igual antes)
-# ================================
 def classificar_area(texto):
     texto = texto.lower()
     if "tribunal" in texto or "tce" in texto or "tj" in texto:
@@ -25,30 +23,40 @@ def classificar_area(texto):
     return "Outros"
 
 # ================================
-# Usando API WordPress do Estratégia
+# API oficial do Estratégia (Concursos Sul = categoria 4853)
 # ================================
-url = "https://www.estrategiaconcursos.com.br/wp-json/wp/v2/posts?categories=327&per_page=20"
+url = "https://www.estrategiaconcursos.com.br/wp-json/wp/v2/posts?categories=4853&per_page=10"
 
 response = requests.get(url)
-posts = response.json()
+
+# 🔹 Debug: se não vier JSON, mostrar o erro
+if response.status_code != 200:
+    print("❌ Erro na requisição:", response.status_code)
+    print(response.text[:500])  # mostra só o início da resposta
+    exit(1)
+
+try:
+    data = response.json()
+except Exception as e:
+    print("❌ Erro ao converter para JSON:", str(e))
+    print("Resposta recebida:", response.text[:500])
+    exit(1)
 
 concursos = []
-for post in posts:
-    titulo = post["title"]["rendered"]
-    link = post["link"]
-    detalhes = post["excerpt"]["rendered"]
+for item in data:
+    titulo = item.get("title", {}).get("rendered", "Sem título")
+    link = item.get("link", "")
+    resumo_html = item.get("excerpt", {}).get("rendered", "")
+    resumo = BeautifulSoup(resumo_html, "html.parser").get_text(" ", strip=True)
 
     concursos.append({
         "titulo": titulo,
         "link": link,
-        "detalhes": detalhes,
-        "area": classificar_area(titulo + " " + detalhes)
+        "detalhes": resumo,
+        "area": classificar_area(titulo + " " + resumo)
     })
 
-# ================================
-# Salvar em JSON
-# ================================
 with open("concursos.json", "w", encoding="utf-8") as f:
     json.dump(concursos, f, indent=2, ensure_ascii=False)
 
-print("✅ Concursos salvos em concursos.json via API")
+print("✅ Concursos salvos em concursos.json")

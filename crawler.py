@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import json
 
 # ================================
-# Classificação por área
+# Função para classificar área
 # ================================
 def classificar_area(texto):
     texto = texto.lower()
@@ -26,23 +26,30 @@ def classificar_area(texto):
     return "Outros"
 
 # ================================
-# Scraper de exemplo (site Estratégia)
+# Scraper do site Estratégia
 # ================================
 url = "https://www.estrategiaconcursos.com.br/blog/concursos-sul/"
-response = requests.get(url)
+response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
 soup = BeautifulSoup(response.text, "html.parser")
 
 concursos = []
-for item in soup.select(".card-concurso"):
-    titulo = item.select_one(".card-title").get_text(strip=True) if item.select_one(".card-title") else "Sem título"
-    link = item.find("a")["href"] if item.find("a") else ""
-    detalhes = item.get_text(" ", strip=True)
+for item in soup.select("article"):
+    titulo_elem = item.select_one("h3")
+    link_elem = item.select_one("a")
+    detalhes_elem = item.select_one("p")
+
+    if not titulo_elem:
+        continue
+
+    titulo = titulo_elem.get_text(strip=True)
+    link = link_elem["href"] if link_elem else ""
+    detalhes = detalhes_elem.get_text(strip=True) if detalhes_elem else ""
 
     concursos.append({
         "titulo": titulo,
         "link": link,
-        "area": classificar_area(titulo + " " + detalhes),
-        "detalhes": detalhes
+        "detalhes": detalhes,
+        "area": classificar_area(titulo + " " + detalhes)
     })
 
 # ================================
@@ -51,4 +58,4 @@ for item in soup.select(".card-concurso"):
 with open("concursos.json", "w", encoding="utf-8") as f:
     json.dump(concursos, f, indent=2, ensure_ascii=False)
 
-print("✅ Concursos salvos em concursos.json")
+print(f"✅ Salvo {len(concursos)} concursos em concursos.json")

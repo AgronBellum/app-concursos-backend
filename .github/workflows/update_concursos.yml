@@ -23,7 +23,7 @@ jobs:
           pip install requests beautifulsoup4
 
       - name: Rodar scraper
-        run: python scraper.py   # 👈 nome do arquivo do seu código de scraping
+        run: python crawler.py   # 👈 nome do arquivo do seu código de scraping
 
       - name: Commit e push resultados
         run: |
